@@ -48,12 +48,12 @@ int main(){
       		token = strtok(NULL, " ");
     	}
     	arguments[argument_count] = NULL;
-	if(argument_count>0){
-		if (strcmp(arguments[0], "exit") == 0)
-            		exit(0);
-    		runcommand(command, arguments);
-	}
-        printf("shell: "); 
+			if(argument_count>0){
+				if (strcmp(arguments[0], "exit") == 0)
+										exit(0);
+						runcommand(command, arguments);
+			}
+						printf("shell: ");
     }
     return 0;
 }
