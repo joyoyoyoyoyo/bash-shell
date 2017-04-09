@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 //    stuff_to_fork();
 
 }
-
+// See: http://stackoverflow.com/questions/189972/argument-parsing-helpers-for-c-unix/
 void parse(int argc, char* argv[]) {
     int opt;
     int index;
