@@ -18,11 +18,40 @@
 
 #define IS_CHILD_PROCESS 0
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
+
+    // parse command line arguments
+    parse(argc, argv);
 
     // stuff to fork
-    stuff_to_fork();
+//    stuff_to_fork();
 
+}
+
+void parse(int argc, char* argv[]) {
+    int opt;
+    int index;
+    char *test;
+    while ( (opt = getopt(argc, argv, "|:<>:")) != -1 ) {
+        switch (opt) {
+            case '|':
+                break;
+            case '<':
+                break;
+            case '>':
+//                command.source_ip_address = optarg; //must be required
+//                num_of_optparams_specified += 2;
+                break;
+            default:
+                test = optarg;
+                if (test != NULL) {
+                    execvp(optarg, argv);
+                    exit(0); // terminate the program
+                }
+        }
+    }
+    for (index = optind; index < argc; index++)
+        printf ("Non-option argument %s\n", argv[index]);
 }
 
 void stuff_to_fork() {
@@ -52,4 +81,8 @@ void stuff_to_fork() {
     }
 
     exit(0);
+}
+
+void tree() {
+    // the list and hierarchical execution
 }
