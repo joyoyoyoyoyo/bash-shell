@@ -13,13 +13,13 @@ int main(int argc, char** argv) {
 
    // assume one program argument
   char *const *cmd = (char *const *) "echo \"Command ls -l\"";
-  char* cmd2 = NULL;
-  cmd2 = "hi";
+  char* args[] = {"ls", "-aF", "/", 0};	/* each element represents a command line argument */
+
   int pid = fork();
   if (pid == 0) {
     // initialize child context
     printf("%i\n", pid);
-    execvp("echo", cmd2);
+    execvp("ls", args);
   } else {
     // This is the parent process. Wait for the child process to complete
     waitpid(pid, NULL, 0);
