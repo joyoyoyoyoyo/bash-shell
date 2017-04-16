@@ -15,35 +15,18 @@
 // methods included in the header: getenv() and exit()
 #include <stdlib.h>
 
+// used to parse command line arguments and build an argument list for the executing commands
+#include "regex.h"
 
 #define IS_CHILD_PROCESS 0
 
 int main(int argc, char* argv[]) {
 
-    // parse command line arguments
-    int opt;
-    int index;
-    char *test;
-    while ( (opt = getopt(argc, argv, "|:<>:")) != -1 ) {
-        switch (opt) {
-            case '|':
-                break;
-            case '<':
-                break;
-            case '>':
-//                command.source_ip_address = optarg; //must be required
-//                num_of_optparams_specified += 2;
-                break;
-            default:
-                test = optarg;
-                if (test != NULL) {
-                    execvp(optarg, argv);
-                    exit(0); // terminate the program
-                }
-        }
-    }
-    for (index = optind; index < argc; index++)
-        printf ("Non-option argument %s\n", argv[index]);
+//    regex_t =
+
+
+    pid_t pid = getpid(); // get the current process
+
 
 
 
@@ -79,8 +62,4 @@ void stuff_to_fork() {
     }
 
     exit(0);
-}
-
-void tree() {
-    // the list and hierarchical execution
 }
