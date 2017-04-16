@@ -1,1 +1,0 @@
-/usr/bin/cc  -g   CMakeFiles/proj00_bash_shell.dir/commandline.c.o  -o proj00_bash_shell 
