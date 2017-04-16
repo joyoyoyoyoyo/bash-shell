@@ -3,19 +3,19 @@ CFLAGS  = -O
 LDFLAGS  = -O 
 
 
-all: commandline
+all: shell
 
-commandline:  commandline.o
+commandline:  shell.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 run: 
-	./commandline
+	./shell
 
 test: 
-	./commandline < testfile
+	./shell < testfile
 
 clean:
-	rm commandline
+	rm shell
 
 
 .c.o:
