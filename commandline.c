@@ -21,14 +21,6 @@
 int main(int argc, char* argv[]) {
 
     // parse command line arguments
-    parse(argc, argv);
-
-    // stuff to fork
-//    stuff_to_fork();
-
-}
-// See: http://stackoverflow.com/questions/189972/argument-parsing-helpers-for-c-unix/
-void parse(int argc, char* argv[]) {
     int opt;
     int index;
     char *test;
@@ -52,6 +44,12 @@ void parse(int argc, char* argv[]) {
     }
     for (index = optind; index < argc; index++)
         printf ("Non-option argument %s\n", argv[index]);
+
+
+
+    // stuff to fork
+//    stuff_to_fork();
+
 }
 
 void stuff_to_fork() {

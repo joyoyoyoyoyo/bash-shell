@@ -1,0 +1,3 @@
+/home/bahamut/ClionProjects/ubiquitous-octo-computing-machine/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/bahamut/ClionProjects/ubiquitous-octo-computing-machine/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/bahamut/ClionProjects/ubiquitous-octo-computing-machine/cmake-build-debug/CMakeFiles/proj00_bash_shell.dir
