@@ -17,16 +17,106 @@
 // used to retrieve our PATH directory and contents within the bin and other path variables
 // methods included in the header: getenv() and exit()
 #include <stdlib.h>
+#include <string.h>
 
+// process handling
 #define IS_CHILD_PROCESS 0
 
+// tokens
+#define TOKEN_PIPE "|"
+#define TOKEN_WRITE ">"
+#define TOKEN_READ "<"
+#define BASH_REGEX "(ls)"
+
+
+// memory buffer sizes
+#define MAX_MATCHES 20
+
+//typedef int condition
+char* mergeArguments(int argc, char* argv[]) {
+
+  char *merged_arguments;
+
+  // String helpers to concatenate program arguments
+  int arg_index;
+  merged_arguments = getcwd(0,0);
+  printf("%s", merged_arguments);
+  for (arg_index = 0; arg_index < argc; arg_index++) {
+    strcat(merged_arguments, argv[arg_index]);
+  }
+  printf("%s\n", merged_arguments);
+  return merged_arguments;
+}
+
+
 int main(int argc, char* argv[]) {
-
   regex_t pattern;
+  char pattern1[80] = "((u[0-9]{1,2})|(phaseu)|(phasep)|[\\W]+([xyz])[\\W]+)";
 
 
+  // My regular expression
+  char bash_regex_tokenizer[2024] = "(ls -l)";
+  char token_buffer[2024];
+  char* select;
 
-  pid_t pid = getpid(); // get the current process
+
+  // Match these test cases
+  char *testfile_line1[] = {"echo", "\"Command ls -l\"", NULL};
+  char *testfile_1ine2[] = {"ls", "-l", "-f", NULL};
+  char *testfile_line3[] = {"echo", "\"Command ls\"", NULL};
+  char *testfile_line4[] = {"ls", "-al", NULL};
+  char *testfile_line5[] = {"exit"};
+
+  // memory for matches
+
+  int length_of_token;
+  int err, isFound;
+//  regex_t bash_r; // regex for parsing bash
+  regmatch_t token_matches[MAX_MATCHES];
+
+
+  // compile pattern
+  if( regcomp(&pattern, pattern1,REG_EXTENDED) == 0) // number of parenthesized subexpressions
+    printf("error with token parsing");
+  printf("\nyesy\n");
+  // FOR SOME STUPID REASON, mergeArguments had to be after regex compilation
+  select = mergeArguments(2, testfile_line1);
+  printf("%s\n", select);
+
+  if(regexec(&pattern, select, MAX_MATCHES, token_matches, 0)) {
+    printf("No Match");
+  }
+//  if(isFound == 0) {
+    int i;
+    for(i = 0; i < MAX_MATCHES; i++) {
+      if ((int) token_matches[i].rm_so < 0) break;
+//      length_of_token = ((int) token_matches[i].rm_eo - (int) token_matches[i].rm_so);
+//      strncpy(token_buffer, *testfile_1ine2 + token_matches[i].rm_so, (size_t) length_of_token);
+//      token_buffer[length_of_token] = '\0';
+      printf("String Match: %s\n", select);  regfree(&pattern);
+
+    }
+//  }
+
+  regfree(&pattern);
+  return 0;
+
+////  if(isFound == 0) {
+//  for(int i = 0; i < MAX_MATCHES; i++) {
+//    int start_index;
+//    int end_index;
+//    start_index = token_match[i].rm_so + (*testfile_line1 -
+//    printf("%c", *testfile_line1[1]);
+//  }
+//    printf("%s", "Success");
+//  else
+//    if (compile_sucess == REG_NOMATCH)
+//      printf("No match");
+//    else
+//      regerror(comp);
+//    printf("error");
+
+//  pid_t pid = getpid(); // get the current process
 
 
 
