@@ -33,6 +33,14 @@
 #define MAX_MATCHES 20
 #define MAX_ARG_BUFFER 2024
 
+// helper for arbitary no flag provided argument
+#define NO_FLAG 0
+#define TOTAL_POSSIBLE_NUM_MATCHES 16
+
+
+#define MAX_POSSIBLE_OFFSET_CAPTURES 2;
+#define MAX_POSSIBLE_CAPTURES 64
+
 //typedef int condition
 char* mergeArguments(int argc, char* argv[]) {
 
@@ -52,13 +60,89 @@ char* mergeArguments(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
   regex_t pattern;
-  char pattern1[80] = "((u[0-9]{1,2})|(phaseu)|(phasep)|[\\W]+([xyz])[\\W]+)";
+  int number_of_parenthesized_expressions = (int) pattern.re_nsub;
+  regmatch_t match;
+  int byte_offset_from_start_of_string_to_substring = (char) match.rm_so;
+  int byte_offset_from_end_of_string_to_substring = (char) match.rm_eo;
+
+  int response;
+  // place the string pointed to by the pattern into the first argument
+  response = regcomp(&pattern, "(ello)", REG_EXTENDED); // only try: | !REG_NOSUB)
+  if (response == 0) {
+    printf("Sucessful compilation\n");
+  } else {
+    printf("Pattern is undefined\n");
+    exit(1);
+  }
+
+  int t;
+  char *input = "helloworld helloworld";
+  regmatch_t matches_found[TOTAL_POSSIBLE_NUM_MATCHES][2024];
+//  regmatch_t temp_name_experiment[MAX_POSSIBLE_CAPTURES][MAX_POSSIBLE_OFFSET_CAPTURES];
+  int q;
+//  for(q = 0; q < TOTAL_POSSIBLE_NUM_MATCHES; q++) {
+//    matches_found[q] = malloc(2024* sizeof(regmatch_t));
+//  }
+
+  for (t = 0; t < 2; t++) {
+
+    /**
+     * 1st arg: the compiled pattern compared with the second argument
+     * 2nd arg: Null terminated string to compare to
+     * 3rd arg:
+     */
+    int match_response;
+    match_response = regexec(&pattern,
+                             input, // takes a pointer to my string
+                             (size_t) TOTAL_POSSIBLE_NUM_MATCHES,
+                             matches_found[t], NO_FLAG);
+    if (match_response == 0) {
+      printf("Match success!\nStarting character: %c\nEnding character: %c\n",
+             input[matches_found[t]->rm_so],
+             input[matches_found[t]->rm_eo - 1]
+      );
+      input += matches_found[t]->rm_eo; // do pointer arithmetic to the end of the string
+    } else {
+      printf("We didn't find a match in the provided string; %s\n", input);
+    }
+
+
+  }
+
+
+  regfree(&pattern);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   // My regular expression
   char bash_regex_tokenizer[2024] = "(ls)";
   char token_buffer[2024];
   char* select;
+  regmatch_t token_matches[MAX_MATCHES];
 
 
   // Match these test cases
@@ -74,7 +158,6 @@ int main(int argc, char* argv[]) {
   int err, isFound;
   int buffer_count;
 //  regex_t bash_r; // regex for parsing bash
-  regmatch_t token_matches[MAX_MATCHES];
 
 
   // compile pattern
