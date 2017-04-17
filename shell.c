@@ -31,15 +31,16 @@
 
 // memory buffer sizes
 #define MAX_MATCHES 20
+#define MAX_ARG_BUFFER 2024
 
 //typedef int condition
 char* mergeArguments(int argc, char* argv[]) {
 
-  char *merged_arguments;
+  char *merged_arguments = malloc(sizeof(char)*MAX_ARG_BUFFER);
 
   // String helpers to concatenate program arguments
   int arg_index;
-  merged_arguments = getcwd(0,0);
+//  merged_arguments = getcwd(0,0);
   printf("%s", merged_arguments);
   for (arg_index = 0; arg_index < argc; arg_index++) {
     strcat(merged_arguments, argv[arg_index]);
@@ -76,9 +77,8 @@ int main(int argc, char* argv[]) {
 
 
   // compile pattern
-  if( regcomp(&pattern, pattern1,REG_EXTENDED) == 0) // number of parenthesized subexpressions
-    printf("error with token parsing");
-  printf("\nyesy\n");
+  if( regcomp(&pattern, bash_regex_tokenizer,REG_EXTENDED) == 0) // number of parenthesized subexpressions
+    printf("Compiled the RegularExpression");
   // FOR SOME STUPID REASON, mergeArguments had to be after regex compilation
   select = mergeArguments(2, testfile_line1);
   printf("%s\n", select);
@@ -87,15 +87,15 @@ int main(int argc, char* argv[]) {
     printf("No Match");
   }
 //  if(isFound == 0) {
-    int i;
-    for(i = 0; i < MAX_MATCHES; i++) {
-      if ((int) token_matches[i].rm_so < 0) break;
-//      length_of_token = ((int) token_matches[i].rm_eo - (int) token_matches[i].rm_so);
-//      strncpy(token_buffer, *testfile_1ine2 + token_matches[i].rm_so, (size_t) length_of_token);
-//      token_buffer[length_of_token] = '\0';
-      printf("String Match: %s\n", select);  regfree(&pattern);
-
-    }
+//    int i;
+//    for(i = 0; i < MAX_MATCHES; i++) {
+//      if ((int) token_matches[i].rm_so < 0) break;
+////      length_of_token = ((int) token_matches[i].rm_eo - (int) token_matches[i].rm_so);
+////      strncpy(token_buffer, *testfile_1ine2 + token_matches[i].rm_so, (size_t) length_of_token);
+////      token_buffer[length_of_token] = '\0';
+//      printf("String Match: %s\n", select);  regfree(&pattern);
+//
+//    }
 //  }
 
   regfree(&pattern);
