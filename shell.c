@@ -56,13 +56,13 @@ int main(int argc, char* argv[]) {
 
 
   // My regular expression
-  char bash_regex_tokenizer[2024] = "(ls -l)";
+  char bash_regex_tokenizer[2024] = "(ls)";
   char token_buffer[2024];
   char* select;
 
 
   // Match these test cases
-  char *testfile_line1[] = {"echo", "\"Command ls -l\"", NULL};
+  char *testfile_line1[] = {"echo", "\"Command ls -l\" hi ls hi", NULL};
   char *testfile_1ine2[] = {"ls", "-l", "-f", NULL};
   char *testfile_line3[] = {"echo", "\"Command ls\"", NULL};
   char *testfile_line4[] = {"ls", "-al", NULL};
@@ -72,20 +72,32 @@ int main(int argc, char* argv[]) {
 
   int length_of_token;
   int err, isFound;
+  int buffer_count;
 //  regex_t bash_r; // regex for parsing bash
   regmatch_t token_matches[MAX_MATCHES];
 
 
   // compile pattern
   if( regcomp(&pattern, bash_regex_tokenizer,REG_EXTENDED) == 0) // number of parenthesized subexpressions
-    printf("Compiled the RegularExpression");
+    printf("Compiled the RegularExpression\n");
   // FOR SOME STUPID REASON, mergeArguments had to be after regex compilation
   select = mergeArguments(2, testfile_line1);
   printf("%s\n", select);
+  int i;
+    int sub = pattern.re_nsub;
+    err = regexec(&pattern, select, sub, token_matches, 0);
 
-  if(regexec(&pattern, select, MAX_MATCHES, token_matches, 0)) {
-    printf("No Match");
-  }
+      if (err == REG_NOMATCH)
+        printf("Test\n");
+      buffer_count = (int)token_matches[i].rm_eo - (int)token_matches[i].rm_so;
+      strncpy(token_buffer,select+token_matches[i].rm_so,buffer_count);
+      token_buffer[buffer_count] = '\0';
+      printf("From %d to %d (%s)\n",(int)token_matches[i].rm_so,
+             (int)token_matches[i].rm_eo,token_buffer);
+
+      printf("Match: %s\n", (select + 1) + (token_matches[0].rm_so - 1));
+
+
 //  if(isFound == 0) {
 //    int i;
 //    for(i = 0; i < MAX_MATCHES; i++) {
@@ -99,6 +111,7 @@ int main(int argc, char* argv[]) {
 //  }
 
   regfree(&pattern);
+
   return 0;
 
 ////  if(isFound == 0) {
