@@ -67,7 +67,7 @@ int main(int argc, char* argv[], char* env[]) {
 
   int response;
   // place the string pointed to by the pattern into the first argument
-  response = regcomp(&pattern, "(.*)[<|>]", REG_EXTENDED); // only try: | !REG_NOSUB)
+  response = regcomp(&pattern, "([^|<>])+\\s?[<|>]", REG_EXTENDED); // only try: | !REG_NOSUB)
   if (response == 0) {
     printf("Sucessful compilation\n");
   } else {
@@ -78,7 +78,7 @@ int main(int argc, char* argv[], char* env[]) {
   int t;
   char *input = "helloworld helloworld";
   input = "echo \"Hello World!\"";
-  input = "ls -l  > temp";
+  input = "ls -l  > temp > temp2";
   regmatch_t matches_found[TOTAL_POSSIBLE_NUM_MATCHES][2024];
   int offsets[TOTAL_POSSIBLE_NUM_MATCHES][2];
 //  regmatch_t temp_name_experiment[MAX_POSSIBLE_CAPTURES][MAX_POSSIBLE_OFFSET_CAPTURES];
@@ -86,6 +86,12 @@ int main(int argc, char* argv[], char* env[]) {
 //  for(q = 0; q < TOTAL_POSSIBLE_NUM_MATCHES; q++) {
 //    matches_found[q] = malloc(2024* sizeof(regmatch_t));
 //  }
+//  char matched_string_buffer[2024];
+
+//  char *matched_string_buffer =  (char *) malloc(sizeof(char) * 2024);
+//  char *matched_string_buffer = (char*) malloc(2024 * sizeof(char));
+  char array[2024];
+  char *temp;
   int number_of_matches_found = 0;
   for (t = 0; t < 2; t++) {
 
@@ -95,6 +101,7 @@ int main(int argc, char* argv[], char* env[]) {
      * 3rd arg:
      */
     int match_response;
+
     match_response = regexec(&pattern,
                              input, // takes a pointer to my string
                              (size_t) TOTAL_POSSIBLE_NUM_MATCHES,
@@ -104,9 +111,18 @@ int main(int argc, char* argv[], char* env[]) {
              input[matches_found[t]->rm_so],
              input[matches_found[t]->rm_eo - 1]
       );
-      offsets[number_of_matches_found][0] = matches_found[t]->rm_so;
-      offsets[number_of_matches_found][1] = matches_found[t]->rm_eo;
+      offsets[number_of_matches_found][0] = (int) matches_found[t]->rm_so;
+      offsets[number_of_matches_found][1] = (int) matches_found[t]->rm_eo;
+      int input_size = offsets[number_of_matches_found][1] - offsets[number_of_matches_found][0];
+      char* matched_string_buffer = malloc(input_size);
+
+      strncpy(matched_string_buffer,input+matches_found[t]->rm_so, input_size);
+
+      char pipe_character =  input[matches_found[t]->rm_eo - 1];
+      matched_string_buffer[input_size ] = '\0';
+      printf("%s\n", matched_string_buffer);
       input += matches_found[t]->rm_eo; // do pointer arithmetic to the end of the string
+      matched_string_buffer = matched_string_buffer + input_size + 1;
       number_of_matches_found++;
     }
     else {
