@@ -58,7 +58,7 @@ char* mergeArguments(int argc, char* argv[]) {
 }
 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[], char* env[]) {
   regex_t pattern;
   int number_of_parenthesized_expressions = (int) pattern.re_nsub;
   regmatch_t match;
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
 
   int response;
   // place the string pointed to by the pattern into the first argument
-  response = regcomp(&pattern, "(ello)", REG_EXTENDED); // only try: | !REG_NOSUB)
+  response = regcomp(&pattern, "(.*)[<|>]", REG_EXTENDED); // only try: | !REG_NOSUB)
   if (response == 0) {
     printf("Sucessful compilation\n");
   } else {
@@ -77,13 +77,16 @@ int main(int argc, char* argv[]) {
 
   int t;
   char *input = "helloworld helloworld";
+  input = "echo \"Hello World!\"";
+  input = "ls -l  > temp";
   regmatch_t matches_found[TOTAL_POSSIBLE_NUM_MATCHES][2024];
+  int offsets[TOTAL_POSSIBLE_NUM_MATCHES][2];
 //  regmatch_t temp_name_experiment[MAX_POSSIBLE_CAPTURES][MAX_POSSIBLE_OFFSET_CAPTURES];
   int q;
 //  for(q = 0; q < TOTAL_POSSIBLE_NUM_MATCHES; q++) {
 //    matches_found[q] = malloc(2024* sizeof(regmatch_t));
 //  }
-
+  int number_of_matches_found = 0;
   for (t = 0; t < 2; t++) {
 
     /**
@@ -101,15 +104,27 @@ int main(int argc, char* argv[]) {
              input[matches_found[t]->rm_so],
              input[matches_found[t]->rm_eo - 1]
       );
+      offsets[number_of_matches_found][0] = matches_found[t]->rm_so;
+      offsets[number_of_matches_found][1] = matches_found[t]->rm_eo;
       input += matches_found[t]->rm_eo; // do pointer arithmetic to the end of the string
-    } else {
+      number_of_matches_found++;
+    }
+    else {
       printf("We didn't find a match in the provided string; %s\n", input);
+      break;
     }
 
 
   }
 
 
+  // parse inbetween pipe characters, since for each function called inside the piping
+  // use getopt inside each program declaration
+
+
+
+
+  // syntax conventions
   regfree(&pattern);
 
 
