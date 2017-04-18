@@ -59,6 +59,11 @@ char* mergeArguments(int argc, char* argv[]) {
 
 
 int main(int argc, char* argv[], char* env[]) {
+
+  char *READ_ARGS = "([a-zA-Z])\\w+|\\w+([a-zA-Z])\\w+|\\w+([a-zA-Z])";
+  char *MAX_ALLOWABLE_PIPES = "([a-zA-Z])\\w+|\\w+([a-zA-Z])\\w+|\\w+([a-zA-Z])";
+
+
   regex_t pattern;
   int number_of_parenthesized_expressions = (int) pattern.re_nsub;
   regmatch_t match;
@@ -67,7 +72,10 @@ int main(int argc, char* argv[], char* env[]) {
 
   int response;
   // place the string pointed to by the pattern into the first argument
-  response = regcomp(&pattern, "([^|<>])+\\s?[<|>]", REG_EXTENDED); // only try: | !REG_NOSUB)
+//  response = regcomp(&pattern, "([^|<>])+\\s?[<|>]", REG_EXTENDED); // only try: | !REG_NOSUB)
+  response = regcomp(&pattern, MAX_ALLOWABLE_PIPES, REG_EXTENDED);
+
+
   if (response == 0) {
     printf("Sucessful compilation\n");
   } else {
@@ -93,7 +101,11 @@ int main(int argc, char* argv[], char* env[]) {
   char array[2024];
   char *temp;
   int number_of_matches_found = 0;
-  for (t = 0; t < 2; t++) {
+  char* matched_string_buffer[TOTAL_POSSIBLE_NUM_MATCHES];
+
+  input = "cat < inputfile | sort | wc > temp "; // MAX_ALLOWABLE_PIPES
+
+  for (t = 0; t < TOTAL_POSSIBLE_NUM_MATCHES; t++) {
 
     /**
      * 1st arg: the compiled pattern compared with the second argument
@@ -107,22 +119,22 @@ int main(int argc, char* argv[], char* env[]) {
                              (size_t) TOTAL_POSSIBLE_NUM_MATCHES,
                              matches_found[t], NO_FLAG);
     if (match_response == 0) {
-      printf("Match success!\nStarting character: %c\nEnding character: %c\n",
-             input[matches_found[t]->rm_so],
-             input[matches_found[t]->rm_eo - 1]
-      );
+//      printf("Match success!\nStarting character: %c\nEnding character: %c\n",
+//             input[matches_found[t]->rm_so],
+//             input[matches_found[t]->rm_eo - 1]
+//      );
       offsets[number_of_matches_found][0] = (int) matches_found[t]->rm_so;
       offsets[number_of_matches_found][1] = (int) matches_found[t]->rm_eo;
       int input_size = offsets[number_of_matches_found][1] - offsets[number_of_matches_found][0];
-      char* matched_string_buffer = malloc(input_size);
+      matched_string_buffer[t] = malloc(input_size + 1);
 
-      strncpy(matched_string_buffer,input+matches_found[t]->rm_so, input_size);
+      strncpy(matched_string_buffer[t],input+matches_found[t]->rm_so, input_size + 1);
 
       char pipe_character =  input[matches_found[t]->rm_eo - 1];
-      matched_string_buffer[input_size ] = '\0';
-      printf("%s\n", matched_string_buffer);
+      matched_string_buffer[t][input_size ] = '\0';
+      printf("%s\n", matched_string_buffer[t]);
       input += matches_found[t]->rm_eo; // do pointer arithmetic to the end of the string
-      matched_string_buffer = matched_string_buffer + input_size + 1;
+//      matched_string_buffer[t] = matched_string_buffer[t] + input_size + 1;
       number_of_matches_found++;
     }
     else {
@@ -132,6 +144,8 @@ int main(int argc, char* argv[], char* env[]) {
 
 
   }
+
+  // split on white space and create a string args element
 
 
   // parse inbetween pipe characters, since for each function called inside the piping
@@ -143,13 +157,15 @@ int main(int argc, char* argv[], char* env[]) {
   // syntax conventions
   regfree(&pattern);
 
+  stuff_to_fork();
 
 
 
 
 
-
-
+  // handle the filehandler for the passing of inputs into the argument list
+//  = dup2
+//  execvp()
 
 
 
