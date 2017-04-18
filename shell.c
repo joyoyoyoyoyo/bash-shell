@@ -64,7 +64,11 @@ int main(int argc, char* argv[], char* env[]) {
   char *MAX_ALLOWABLE_PIPES = "([a-zA-Z])\\w+|\\w+([a-zA-Z])\\w+|\\w+([a-zA-Z])";
   char *READ_ALL_WORDS = "([a-zA-Z]+) ";
   char *CAPTURE_MAX_ALLOWABLE_PIPES = "([a-zA-Z]+)\\s+\\|\\s+([a-zA-Z]+)\\s+\\|\\s+([a-zA-Z]+)";
+  char *READ_FILE = "(.*)\\s+<\\s+"; // this is probably better
+//  char *READ_FILE_IN = "<\\s+(.*)";
 
+  char *WRITE_TO_FILE = ">\\s+(.*)";
+  char *WRITE_FROM_FILE = "(.*)\\s+>";
 
   regex_t pattern;
   int number_of_parenthesized_expressions = (int) pattern.re_nsub;
@@ -75,7 +79,7 @@ int main(int argc, char* argv[], char* env[]) {
   int response;
   // place the string pointed to by the pattern into the first argument
 //  response = regcomp(&pattern, "([^|<>])+\\s?[<|>]", REG_EXTENDED); // only try: | !REG_NOSUB)
-  response = regcomp(&pattern, CAPTURE_MAX_ALLOWABLE_PIPES, REG_EXTENDED);
+  response = regcomp(&pattern, WRITE_FROM_FILE, REG_EXTENDED);
 
 
   if (response == 0) {
