@@ -62,6 +62,8 @@ int main(int argc, char* argv[], char* env[]) {
 
   char *READ_ARGS = "([a-zA-Z])\\w+|\\w+([a-zA-Z])\\w+|\\w+([a-zA-Z])";
   char *MAX_ALLOWABLE_PIPES = "([a-zA-Z])\\w+|\\w+([a-zA-Z])\\w+|\\w+([a-zA-Z])";
+  char *READ_ALL_WORDS = "([a-zA-Z]+) ";
+  char *CAPTURE_MAX_ALLOWABLE_PIPES = "([a-zA-Z]+)\\s+\\|\\s+([a-zA-Z]+)\\s+\\|\\s+([a-zA-Z]+)";
 
 
   regex_t pattern;
@@ -73,7 +75,7 @@ int main(int argc, char* argv[], char* env[]) {
   int response;
   // place the string pointed to by the pattern into the first argument
 //  response = regcomp(&pattern, "([^|<>])+\\s?[<|>]", REG_EXTENDED); // only try: | !REG_NOSUB)
-  response = regcomp(&pattern, MAX_ALLOWABLE_PIPES, REG_EXTENDED);
+  response = regcomp(&pattern, CAPTURE_MAX_ALLOWABLE_PIPES, REG_EXTENDED);
 
 
   if (response == 0) {
