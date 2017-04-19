@@ -22,6 +22,9 @@
 // process handling
 #define IS_CHILD_PROCESS 0
 
+// pipe buffer constants
+#define MAX_BUFFER_SIZE 2024
+
 // tokens
 #define TOKEN_PIPE "|"
 #define TOKEN_WRITE ">"
@@ -162,8 +165,174 @@ int main(int argc, char* argv[], char* env[]) {
 
   // syntax conventions
   regfree(&pattern);
+  char *exec_sample_args[] = {"ls", "-l", ">", "temp", NULL};
+  char *quora_example_1st_command[] = {"ls", "-l", "-h", NULL}; // note: no pipe is passed
+  char *quora_example_2nd_command[] = {"wc", "-l", NULL};
+  int exec_response;
+  char pipe_buffer[MAX_BUFFER_SIZE]; // any flushing?
 
-  stuff_to_fork();
+
+  // create pipes
+  int pipe_read_in[2], pipe_write_out[2], pipe_error_out[2];
+  int response_from_pipe1, response_from_pipe2;
+
+  // connect the pipe ends to the current processes file descriptors
+  pipe(pipe_read_in);
+  pipe(pipe_write_out);
+  pipe(pipe_error_out);
+
+  // We have created the file descriptors in the parent process table.
+
+
+  pid_t pid = fork();
+
+
+  if (pid < 0) {
+    perror("error");
+    return EXIT_FAILURE;
+  }
+  else if(pid == 0) {
+    printf("my process ID is %d\n", getpid());
+//    printf("my parent's process ID is %d\n", getppid());
+//    printf("my child's process ID is %d\n", child_pid);
+    /**
+     * Child Process
+     *
+     * 0: File Descriptor index of pipe = Read End
+     * 1: File Descriptor index of pipe = Write End
+     * */
+
+    /**
+     * Before parent process can receive input, the child processes must
+     * close its corresponding file descriptors so that the pipe does
+     * not assume there may still be input or output coming from the
+     * child process
+     */
+    close(pipe_read_in[1]);  // close write end of std_input
+    close(pipe_write_out[0]);  // close read end of std_output
+    close(pipe_error_out[0]);  // close read end of std_error
+
+    /**
+     * Switch and reassign file descriptors, because at the moment our
+     * current file descriptors are not referencing the correct processes
+     */
+    dup2(pipe_read_in[0], STDIN_FILENO); // read end will use pipes
+    dup2(pipe_write_out[1], STDOUT_FILENO); // write end will use pipes
+    dup2(pipe_error_out[1], STDERR_FILENO); // write end will use pipes
+
+
+    /**
+     * Execute the given program
+     */
+    exec_response = execvp(quora_example[1],quora_example+1);
+    if (exec_response == -1) {
+      perror("Failure to execute subprocess");
+      return EXIT_FAILURE;
+    }
+
+
+  } else {
+    /**
+     * Parent Process
+     *
+     * 0: File Descriptor index of pipe = Read End
+     * 1: File Descriptor index of pipe = Write End
+     */
+
+
+    /**
+     * Before parent process can receive input, the child processes must
+     * close its corresponding file descriptors so that the pipe does
+     * not assume there may still be input or output coming from the
+     * child process
+     */
+    close(pipe_read_in[0]);  // close read end of std_input
+    close(pipe_write_out[1]);  // close write end of std_output
+    close(pipe_error_out[1]);  // close write end of std_error
+
+    /**
+     * Direct the program input to the child process
+     *
+     * STDIN_FILENO: file descriptor for std_input
+     *
+     */
+
+    /**
+     * Write End of Std_in will be directed to the pipe_buffer
+     */
+    read(
+        STDIN_FILENO, // read from standard input
+        pipe_buffer,
+        MAX_BUFFER_SIZE
+    );
+
+    write (
+        pipe_read_in[1],
+        pipe_buffer,
+        MAX_BUFFER_SIZE
+    );
+    close(pipe_read_in[1]);
+
+    wait(NULL); // or waitpid(pid, NULL, 0);
+
+
+    puts("\nchild's stdout:");
+    fflush(stdout);
+
+    /**
+     * Write End of Std_in will be directed to the pipe_buffer
+     */
+    read(
+        pipe_write_out[0], // read from standard input
+        pipe_buffer,
+        MAX_BUFFER_SIZE
+    );
+
+    write (
+        STDOUT_FILENO,
+        pipe_buffer,
+        MAX_BUFFER_SIZE
+    );
+    close(pipe_write_out[0]);
+
+
+
+    puts("\nchild's stderr:");
+    fflush(stdout);
+
+    read(
+        pipe_error_out[0],
+        pipe_buffer,
+        MAX_BUFFER_SIZE
+    );
+
+    write (
+        STDOUT_FILENO,
+        pipe_buffer,
+        MAX_BUFFER_SIZE
+    );
+    close(pipe_error_out[0]);
+    return EXIT_SUCCESS;
+
+
+  }
+  // man 2 write
+//  execvp()
+//
+//  read(pipe_read_from_fd1[0], pipe_buffer, 15);
+//  printf("Parent Process %d\t%s\n", getpid(), pipe_buffer);
+//  printf("Child Process: %d\n", getpid(), pipe_buffer);
+//  write(pipe_read_from_fd1[1], "Hey there", 12); // what is 12?
+//  execvp("ls -l", testfile2_line2);
+
+
+
+  exit(0);
+
+
+
+
+//  stuff_to_fork();
 
 
 
@@ -177,6 +346,11 @@ int main(int argc, char* argv[], char* env[]) {
 
 
 
+/**
+ * My debug commands:
+ * gdb bash
+ * break 171
+ */
 
 
 
@@ -187,68 +361,68 @@ int main(int argc, char* argv[], char* env[]) {
 
 
 
-
-
-
-
-  // My regular expression
-  char bash_regex_tokenizer[2024] = "(ls)";
-  char token_buffer[2024];
-  char* select;
-  regmatch_t token_matches[MAX_MATCHES];
-
-
-  // Match these test cases
-  char *testfile_line1[] = {"echo", "\"Command ls -l\" hi ls hi", NULL};
-  char *testfile_1ine2[] = {"ls", "-l", "-f", NULL};
-  char *testfile_line3[] = {"echo", "\"Command ls\"", NULL};
-  char *testfile_line4[] = {"ls", "-al", NULL};
-  char *testfile_line5[] = {"exit"};
-
-  // memory for matches
-
-  int length_of_token;
-  int err, isFound;
-  int buffer_count;
-//  regex_t bash_r; // regex for parsing bash
-
-
-  // compile pattern
-  if( regcomp(&pattern, bash_regex_tokenizer,REG_EXTENDED) == 0) // number of parenthesized subexpressions
-    printf("Compiled the RegularExpression\n");
-  // FOR SOME STUPID REASON, mergeArguments had to be after regex compilation
-  select = mergeArguments(2, testfile_line1);
-  printf("%s\n", select);
-  int i;
-    int sub = pattern.re_nsub;
-    err = regexec(&pattern, select, sub, token_matches, 0);
-
-      if (err == REG_NOMATCH)
-        printf("Test\n");
-      buffer_count = (int)token_matches[i].rm_eo - (int)token_matches[i].rm_so;
-      strncpy(token_buffer,select+token_matches[i].rm_so,buffer_count);
-      token_buffer[buffer_count] = '\0';
-      printf("From %d to %d (%s)\n",(int)token_matches[i].rm_so,
-             (int)token_matches[i].rm_eo,token_buffer);
-
-      printf("Match: %s\n", (select + 1) + (token_matches[0].rm_so - 1));
-
-
-//  if(isFound == 0) {
-//    int i;
-//    for(i = 0; i < MAX_MATCHES; i++) {
-//      if ((int) token_matches[i].rm_so < 0) break;
-////      length_of_token = ((int) token_matches[i].rm_eo - (int) token_matches[i].rm_so);
-////      strncpy(token_buffer, *testfile_1ine2 + token_matches[i].rm_so, (size_t) length_of_token);
-////      token_buffer[length_of_token] = '\0';
-//      printf("String Match: %s\n", select);  regfree(&pattern);
+///** **********************
 //
-//    }
-//  }
-
-  regfree(&pattern);
-
-  return 0;
+//
+//  // My regular expression
+//  char bash_regex_tokenizer[2024] = "(ls)";
+//  char token_buffer[2024];
+//  char* select;
+//  regmatch_t token_matches[MAX_MATCHES];
+//
+//
+//  // Match these test cases
+//  char *testfile_line1[] = {"echo", "\"Command ls -l\" hi ls hi", NULL};
+//  char *testfile_1ine2[] = {"ls", "-l", "-f", NULL};
+//  char *testfile_line3[] = {"echo", "\"Command ls\"", NULL};
+//  char *testfile_line4[] = {"ls", "-al", NULL};
+//  char *testfile_line5[] = {"exit"};
+//
+//  // memory for matches
+//
+//  int length_of_token;
+//  int err, isFound;
+//  int buffer_count;
+////  regex_t bash_r; // regex for parsing bash
+//
+//
+//  // compile pattern
+//  if( regcomp(&pattern, bash_regex_tokenizer,REG_EXTENDED) == 0) // number of parenthesized subexpressions
+//    printf("Compiled the RegularExpression\n");
+//  // FOR SOME STUPID REASON, mergeArguments had to be after regex compilation
+//  select = mergeArguments(2, testfile_line1);
+//  printf("%s\n", select);
+//  int i;
+//    int sub = pattern.re_nsub;
+//    err = regexec(&pattern, select, sub, token_matches, 0);
+//
+//      if (err == REG_NOMATCH)
+//        printf("Test\n");
+//      buffer_count = (int)token_matches[i].rm_eo - (int)token_matches[i].rm_so;
+//      strncpy(token_buffer,select+token_matches[i].rm_so,buffer_count);
+//      token_buffer[buffer_count] = '\0';
+//      printf("From %d to %d (%s)\n",(int)token_matches[i].rm_so,
+//             (int)token_matches[i].rm_eo,token_buffer);
+//
+//      printf("Match: %s\n", (select + 1) + (token_matches[0].rm_so - 1));
+//
+//
+////  if(isFound == 0) {
+////    int i;
+////    for(i = 0; i < MAX_MATCHES; i++) {
+////      if ((int) token_matches[i].rm_so < 0) break;
+//////      length_of_token = ((int) token_matches[i].rm_eo - (int) token_matches[i].rm_so);
+//////      strncpy(token_buffer, *testfile_1ine2 + token_matches[i].rm_so, (size_t) length_of_token);
+//////      token_buffer[length_of_token] = '\0';
+////      printf("String Match: %s\n", select);  regfree(&pattern);
+////
+////    }
+////  }
+//
+//  regfree(&pattern);
+//
+//  return 0;
+//  **/
 
 ////  if(isFound == 0) {
 //  for(int i = 0; i < MAX_MATCHES; i++) {
