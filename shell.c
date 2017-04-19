@@ -60,6 +60,18 @@ char* mergeArguments(int argc, char* argv[]) {
   return merged_arguments;
 }
 
+void read_all(int src, int dst) {
+  char buf[BUFSIZ];
+  ssize_t bytes_read, bytes_written;
+  while ((bytes_read = read(src, buf, BUFSIZ)) > 0) {
+    bytes_written = 0;
+    while (bytes_written < bytes_read)
+      bytes_written += write(dst,
+                             buf + bytes_written,
+                             bytes_read - bytes_written);
+  }
+}
+
 
 int main(int argc, char* argv[], char* env[]) {
 
@@ -165,6 +177,16 @@ int main(int argc, char* argv[], char* env[]) {
 
   // syntax conventions
   regfree(&pattern);
+
+
+  //TODO: for every num_processes_detected, create an argument list & pid declarations
+  // if (processes found == 1) only one char* arg[] and one pid_t pid1
+  // if (two processes found == 2) char* arg[] + char* arg2[] AND pid_t pid1, pid2
+
+
+
+
+
   char *exec_sample_args[] = {"ls", "-l", ">", "temp", NULL};
   char *quora_example_1st_command[] = {"ls", "-l", "-h", NULL}; // note: no pipe is passed
   char *quora_example_2nd_command[] = {"wc", "-l", NULL};
@@ -184,14 +206,14 @@ int main(int argc, char* argv[], char* env[]) {
   // We have created the file descriptors in the parent process table.
 
 
-  pid_t pid = fork();
+  pid_t pid_writeout_process = fork();
 
 
-  if (pid < 0) {
+  if (pid_writeout_process < 0) {
     perror("error");
     return EXIT_FAILURE;
   }
-  else if(pid == 0) {
+  else if(pid_writeout_process == 0) {
     printf("my process ID is %d\n", getpid());
 //    printf("my parent's process ID is %d\n", getppid());
 //    printf("my child's process ID is %d\n", child_pid);
@@ -201,7 +223,19 @@ int main(int argc, char* argv[], char* env[]) {
      * 0: File Descriptor index of pipe = Read End
      * 1: File Descriptor index of pipe = Write End
      * */
+    read(
+        STDIN_FILENO, // read from standard input
+        pipe_buffer,
+        MAX_BUFFER_SIZE
+    );
 
+    write (
+        pipe_read_in[1],
+        pipe_buffer,
+        MAX_BUFFER_SIZE
+    );
+//    read_all(STDIN_FILENO, pipe_read_in[1]);
+    close(pipe_read_in[1]);
     /**
      * Before parent process can receive input, the child processes must
      * close its corresponding file descriptors so that the pipe does
@@ -224,14 +258,22 @@ int main(int argc, char* argv[], char* env[]) {
     /**
      * Execute the given program
      */
-    exec_response = execvp(quora_example[1],quora_example+1);
+    exec_response = execvp(quora_example_1st_command[0],quora_example_1st_command);
     if (exec_response == -1) {
       perror("Failure to execute subprocess");
       return EXIT_FAILURE;
     }
-
+    printf("\n\nCommand Executed: %s", *quora_example_1st_command);
+    return 1;
 
   } else {
+    waitpid(pid_writeout_process, NULL, 0);
+//    pid_t pid_readin_process = fork();
+//    if (pid_readin_process == 0) {
+//      dup2(pipe)
+
+//    }
+
     /**
      * Parent Process
      *
@@ -240,15 +282,6 @@ int main(int argc, char* argv[], char* env[]) {
      */
 
 
-    /**
-     * Before parent process can receive input, the child processes must
-     * close its corresponding file descriptors so that the pipe does
-     * not assume there may still be input or output coming from the
-     * child process
-     */
-    close(pipe_read_in[0]);  // close read end of std_input
-    close(pipe_write_out[1]);  // close write end of std_output
-    close(pipe_error_out[1]);  // close write end of std_error
 
     /**
      * Direct the program input to the child process
@@ -260,24 +293,14 @@ int main(int argc, char* argv[], char* env[]) {
     /**
      * Write End of Std_in will be directed to the pipe_buffer
      */
-    read(
-        STDIN_FILENO, // read from standard input
-        pipe_buffer,
-        MAX_BUFFER_SIZE
-    );
 
-    write (
-        pipe_read_in[1],
-        pipe_buffer,
-        MAX_BUFFER_SIZE
-    );
-    close(pipe_read_in[1]);
 
     wait(NULL); // or waitpid(pid, NULL, 0);
 
 
     puts("\nchild's stdout:");
     fflush(stdout);
+//    fflush(stdin);
 
     /**
      * Write End of Std_in will be directed to the pipe_buffer
@@ -293,25 +316,41 @@ int main(int argc, char* argv[], char* env[]) {
         pipe_buffer,
         MAX_BUFFER_SIZE
     );
+    //    read_all(pipe_write_out[0], STDOUT_FILENO);
     close(pipe_write_out[0]);
 
 
-
-    puts("\nchild's stderr:");
+//    puts("\nchild's stderr:");
     fflush(stdout);
+    fflush(pipe_buffer);
 
-    read(
-        pipe_error_out[0],
-        pipe_buffer,
-        MAX_BUFFER_SIZE
-    );
+// CURRENTLY cutting out standard error stuff
+//    read(
+//        pipe_error_out[0],
+//        pipe_buffer,
+//        MAX_BUFFER_SIZE
+//    );
+//
+//    write (
+//        STDOUT_FILENO,
+//        pipe_buffer,
+//        MAX_BUFFER_SIZE
+//    );
+////    read_all(pipe_error_out[0], STDOUT_FILENO);
+//    close(pipe_error_out[0]);
 
-    write (
-        STDOUT_FILENO,
-        pipe_buffer,
-        MAX_BUFFER_SIZE
-    );
-    close(pipe_error_out[0]);
+    /**
+   * Before parent process can receive input, the child processes must
+   * close its corresponding file descriptors so that the pipe does
+   * not assume there may still be input or output coming from the
+   * child process
+   */
+    close(pipe_read_in[0]);  // close read end of std_input
+    close(pipe_write_out[1]);  // close write end of std_output
+    close(pipe_error_out[1]);  // close write end of std_error
+
+    wait(NULL);
+//    execvp(quora_example_2nd_command[0], quora_example_2nd_command);
     return EXIT_SUCCESS;
 
 
