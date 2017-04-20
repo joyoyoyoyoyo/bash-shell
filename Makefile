@@ -3,9 +3,9 @@ CFLAGS  = -O
 LDFLAGS  = -O 
 
 
-all: shell
+all: shell1
 
-commandline:  shell.o
+commandline:  shell1.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 run: 
