@@ -33,32 +33,32 @@ void initialize_command(GlobalCommand* command, char**left, char** middle, char*
 //  *commands.middle = *midd_of_pipe;
 //  *commands.right = *righ_of_pipe;
   command->num_commands = 0;
-  if (left == 0)
-    memset(command->left, 0, sizeof(command->left));
-  else {
+//  if (left == 0)
+    memset(command->left, NULL, sizeof(command->left));
+//  else {
     *command->left = *left;
     command->num_commands++;
-  }
-  if (middle == 0)
-    memset(command->middle, 0, sizeof(command->middle));
-  else {
+//  }
+//  if (middle == 0)
+    memset(command->middle, NULL, sizeof(command->middle));
+//  else {
     *command->middle = *middle;
     command->num_commands++;
-  }
-  if (right == 0)
-    memset(command->right, 0, sizeof(command->right));
-  else {
+//  }
+//  if (right == 0)
+    memset(command->right, NULL, sizeof(command->right));
+//  else {
     *command->right = *right;
     command->num_commands++;
-  }
+//  }
   if (read == 0)
-    memset(command->read, 0, sizeof(command->read)); // or command->read[0] = 0;
+    memset(command->read, NULL, sizeof(command->read)); // or command->read[0] = 0;
   else {
     *command->read = *read;
     command->num_commands++;
   }
   if (write == 0)
-    memset(command->write, 0, sizeof(command->write));
+    memset(command->write, NULL, sizeof(command->write));
   else {
     *command->write = *write;
     command->num_commands++;
@@ -66,7 +66,9 @@ void initialize_command(GlobalCommand* command, char**left, char** middle, char*
 
 }
 
-int run( int src, int dest, char* command[]) {
+int run( int src, int dest, char** command) {
+  char *test = getenv("PATH");
+
   pid_t child1 = fork();
   if (child1 == 0) {// child process
     dup2(src, 0);
@@ -85,13 +87,12 @@ int run( int src, int dest, char* command[]) {
 int main() {
   // full command: "ls | grep shell | sort"
   // Test:  cat colors.txt | sed 's/e/E/' | sort
-
   char *left_of_pipe[] = {"cat", "colors2.txt", NULL};
-  char *midd_of_pipe[] = {"sed", "'s/e/E/'", NULL};
+  char *midd_of_pipe[] = {"sed", "s/e/E/", NULL};
   char *righ_of_pipe[] = {"sort", NULL};
 
-//  GlobalCommand commands = {0}; // memset to 0 or memset(&commands, 0, sizeof(commands))
-  GlobalCommand commands = {0};
+  GlobalCommand commands = {0}; // memset to 0 or memset(&commands, 0, sizeof(commands))
+//  commands = {0};
   initialize_command(&commands, left_of_pipe, midd_of_pipe, righ_of_pipe, 0, 0);
   printf("PID: %d\tArgs: %s, %s, %s, %s, %s\tCommand Count: %d\n", getpid(),*commands.left,*commands.middle,*commands.right, *commands.read, *commands.write, commands.num_commands);
 
@@ -103,14 +104,14 @@ int main() {
   int num_pipes = commands.num_commands - 1;
 
   pipe(fd1);
-  run(0, fd1[1], commands.left);
+  run(0, fd1[1], left_of_pipe);
   close(fd1[1]);
 
   pipe(fd2);
-  run(fd1[0], fd2[1], commands.middle);
+  run(fd1[0], fd2[1], midd_of_pipe);
   close(fd2[1]);
 
-  run(fd2[0], 1, commands.right);
+  run(fd2[0], 1, *righ_of_pipe);
   wait(NULL);
   return EXIT_SUCCESS;
   // begin process 1
